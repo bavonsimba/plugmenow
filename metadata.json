@@ -1,0 +1,9 @@
+{
+  "name": "PLUGME - Someone's Got It",
+  "description": "A community-driven platform for connecting demand and supply through informal 'plugs'. No payments, just info.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera",
+    "microphone"
+  ]
+}
