@@ -3,7 +3,6 @@ import { GoogleGenAI } from "@google/genai";
 import { Post, Category } from "../types";
 
 // The API Key is handled securely via process.env.API_KEY
-// No manual configuration is needed in the code.
 const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getMarketInsights = async (posts: Post[]) => {
@@ -21,7 +20,7 @@ export const getMarketInsights = async (posts: Post[]) => {
         Analyze this community marketplace activity. 
         Provide a 2-sentence summary of the "Demand Intelligence". 
         Identify what's trending and what's missing. 
-        Tone: Street-smart, helpful, neighborly.
+        Tone: Street-smart, helpful, neighborly, and calm.
 
         Activity:
         ${postSummary}
@@ -30,23 +29,7 @@ export const getMarketInsights = async (posts: Post[]) => {
     return response.text?.trim() || "The market is finding its rhythm.";
   } catch (error) {
     console.error("Gemini Intel Error:", error);
-    return "Intelligence is currently offline. Trust your gut!";
-  }
-};
-
-export const suggestCategory = async (title: string, description: string): Promise<Category> => {
-  try {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Categorize this for a local neighborhood app: "${title} - ${description}". 
-      Options: ${Object.values(Category).join(', ')}. 
-      Return ONLY the category name.`,
-    });
-    const result = response.text?.trim() as Category;
-    return Object.values(Category).includes(result) ? result : Category.OTHER;
-  } catch (error) {
-    return Category.OTHER;
+    return "Intelligence is currently offline. Trust your neighbors!";
   }
 };
 
@@ -66,5 +49,42 @@ export const refinePostDescription = async (draft: string): Promise<string> => {
     return response.text?.trim() || draft;
   } catch (error) {
     return draft;
+  }
+};
+
+/**
+ * Generates an image representing the post content to help the community visualize it.
+ * Uses gemini-2.5-flash-image as per guidelines.
+ */
+export const generatePostImage = async (title: string, description: string): Promise<string | null> => {
+  try {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            text: `A clear, high-quality photograph of ${title}. ${description}. 
+            Style: Clean product photography on a neutral community-app background. 
+            No text in the image. High visibility.`,
+          },
+        ],
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
+      }
+    });
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Image Generation Error:", error);
+    return null;
   }
 };

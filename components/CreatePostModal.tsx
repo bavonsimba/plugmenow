@@ -1,8 +1,8 @@
 
-import React, { useState, useRef } from 'react';
-import { Post, PostType, Category, Condition } from '../types';
+import React, { useState } from 'react';
+import { Post, PostType, Category } from '../types';
 import { Icons } from '../constants';
-import { refinePostDescription } from '../services/gemini';
+import { refinePostDescription, generatePostImage } from '../services/gemini';
 
 interface CreatePostModalProps {
   onClose: () => void;
@@ -15,8 +15,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, curr
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [image, setImage] = useState<string | undefined>();
   const [isRefining, setIsRefining] = useState(false);
+  const [isVisualizing, setIsVisualizing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const handleRefine = async () => {
     if (!description || description.length < 5) return;
@@ -24,6 +26,18 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, curr
     const refined = await refinePostDescription(description);
     setDescription(refined);
     setIsRefining(false);
+  };
+
+  const handleVisualize = async () => {
+    if (!title) return;
+    setIsVisualizing(true);
+    setStatusMessage('Sketching your request...');
+    const generatedImage = await generatePostImage(title, description);
+    if (generatedImage) {
+      setImage(generatedImage);
+    }
+    setIsVisualizing(false);
+    setStatusMessage('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,7 +53,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, curr
       userName: currentUser.name,
       createdAt: Date.now(),
       isSolved: false,
-      thankedCount: 0
+      thankedCount: 0,
+      image: image
     });
   };
 
@@ -58,18 +73,27 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, curr
           </h2>
         </div>
 
-        {/* Voice First Option */}
-        <div className="mb-8 p-6 bg-indigo-50/50 dark:bg-indigo-900/20 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-[2.5rem] flex flex-col items-center justify-center transition-all">
-            <button 
-              onClick={() => setIsRecording(!isRecording)}
-              className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-indigo-600 hover:scale-110'}`}
-            >
-              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-            </button>
-            <p className="text-[10px] font-black uppercase text-indigo-400 dark:text-indigo-300 mt-4 tracking-widest">
-              {isRecording ? "Listening... (Converted to text)" : "Hate typing? Just speak it."}
-            </p>
-        </div>
+        {/* AI Preview Area */}
+        {(image || isVisualizing) && (
+          <div className="mb-8 relative h-64 w-full bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-slate-100 dark:border-slate-700 group">
+            {isVisualizing ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-indigo-50/50 dark:bg-indigo-900/20 backdrop-blur-md">
+                <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">{statusMessage}</p>
+              </div>
+            ) : (
+              <>
+                <img src={image} alt="Preview" className="w-full h-full object-cover animate-in fade-in duration-1000" />
+                <button 
+                  onClick={() => setImage(undefined)}
+                  className="absolute top-4 right-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ✕
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex gap-4 p-1.5 bg-slate-50 dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-700">
@@ -78,13 +102,25 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onSave, curr
           </div>
 
           <div>
-            <label className="block text-[9px] font-black uppercase text-slate-400 mb-2 ml-2">Item Name</label>
+            <div className="flex justify-between items-center mb-2 ml-2">
+              <label className="block text-[9px] font-black uppercase text-slate-400">Item Name</label>
+              {title.length > 3 && !image && (
+                <button 
+                  type="button" 
+                  onClick={handleVisualize}
+                  disabled={isVisualizing}
+                  className="flex items-center gap-1.5 text-[9px] font-black uppercase text-amber-500 dark:text-amber-400 hover:text-amber-600 transition-colors disabled:opacity-50"
+                >
+                  <Icons.Camera /> Visualize with AI
+                </button>
+              )}
+            </div>
             <input 
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-4 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all dark:text-white"
-              placeholder="e.g. Fresh tomatoes"
+              placeholder="e.g. Vintage Nikon Camera"
             />
           </div>
 

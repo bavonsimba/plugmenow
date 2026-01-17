@@ -2,15 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { Post, Category, PostType } from '../types';
 import { getMarketInsights } from '../services/gemini';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import { Icons } from '../constants';
 
 interface DashboardProps {
   posts: Post[];
+  isQuietMode?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ posts }) => {
-  const [insight, setInsight] = useState('Crunching market intel...');
+const Dashboard: React.FC<DashboardProps> = ({ posts, isQuietMode }) => {
+  const [insight, setInsight] = useState('Gathering neighborhood pulses...');
   
   useEffect(() => {
     const fetchInsight = async () => {
@@ -20,66 +21,83 @@ const Dashboard: React.FC<DashboardProps> = ({ posts }) => {
     fetchInsight();
   }, [posts]);
 
+  // Transform data for human-friendly charts
   const categoryData = Object.values(Category).map(cat => ({
     name: cat,
     count: posts.filter(p => p.category === cat).length
   })).filter(d => d.count > 0);
 
-  const gaveUpReasons = posts
-    .filter(p => p.gaveUpReason)
-    .reduce((acc, p) => {
-      acc[p.gaveUpReason!] = (acc[p.gaveUpReason!] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-  const gaveUpData = Object.entries(gaveUpReasons).map(([name, value]) => ({ name, value }));
-
-  const typeData = [
-    { name: 'Looking', value: posts.filter(p => p.type === PostType.LOOKING).length },
-    { name: 'Have', value: posts.filter(p => p.type === PostType.HAVE).length },
-    { name: 'Solved', value: posts.filter(p => p.isSolved).length },
+  // Mock trend data for "Neighborhood Pulse"
+  const pulseData = [
+    { day: 'Mon', active: 12 },
+    { day: 'Tue', active: 18 },
+    { day: 'Wed', active: 15 },
+    { day: 'Thu', active: 22 },
+    { day: 'Fri', active: 30 },
+    { day: 'Sat', active: 28 },
+    { day: 'Sun', active: 20 },
   ];
 
   const MODERN_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#14b8a6', '#8b5cf6', '#ec4899'];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* AI Summary Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white p-10 rounded-[2.5rem] shadow-2xl shadow-indigo-500/20">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 blur-3xl rounded-full"></div>
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-rose-500/10 blur-3xl rounded-full"></div>
-        
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      
+      {/* 1️⃣ Demand Intelligence Card */}
+      <div className="relative overflow-hidden bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 p-10 rounded-[3rem] shadow-2xl shadow-slate-100 dark:shadow-none">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-indigo-50 dark:bg-indigo-900/40 p-3 rounded-2xl border border-indigo-100 dark:border-indigo-800">
                <Icons.Sparkles />
             </div>
-            <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-indigo-200">Demand Intelligence</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">Demand Intelligence</h2>
           </div>
-          <p className="text-2xl font-black leading-tight tracking-tight italic">
+          <p className="text-2xl font-black text-slate-900 dark:text-white leading-snug tracking-tight italic">
             "{insight}"
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Popular Tags */}
-        <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-50">
-          <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-8 flex items-center gap-2">
-            <Icons.Box /> Market Tags
+        {/* Neighborhood Pulse Area Chart */}
+        <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-8 shadow-sm border border-slate-50 dark:border-slate-700">
+          <h3 className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-8 flex items-center gap-2">
+            <Icons.Map /> Neighborhood Pulse
           </h3>
-          <div className="h-64">
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData} barSize={24}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 800, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fontWeight: 800, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <AreaChart data={pulseData}>
+                <defs>
+                  <linearGradient id="colorPulse" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" opacity={0.5} />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} />
                 <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-                  itemStyle={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }}
+                  contentStyle={{ borderRadius: '1.5rem', border: 'none', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' }}
+                  labelStyle={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '9px', marginBottom: '4px' }}
                 />
-                <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                <Area type="monotone" dataKey="active" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorPulse)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Market Category Distribution */}
+        <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-8 shadow-sm border border-slate-50 dark:border-slate-700">
+          <h3 className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-8 flex items-center gap-2">
+            <Icons.Box /> Active Sectors
+          </h3>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryData} barSize={20} layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} width={80} />
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '1rem', border: 'none' }} />
+                <Bar dataKey="count" radius={[0, 10, 10, 0]}>
                   {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={MODERN_COLORS[index % MODERN_COLORS.length]} />
                   ))}
@@ -88,71 +106,27 @@ const Dashboard: React.FC<DashboardProps> = ({ posts }) => {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Gave Up Stats */}
-        <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-50">
-          <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-8 flex items-center gap-2 text-rose-500">
-             Failed Demand (Gave Up)
-          </h3>
-          {gaveUpData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={gaveUpData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {gaveUpData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={MODERN_COLORS[index % MODERN_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-slate-300 font-bold uppercase text-[10px] italic">
-              No one's given up yet!
-            </div>
-          )}
-        </div>
       </div>
 
-      <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-[2.5rem] p-10">
-        <h3 className="text-xs font-black uppercase text-indigo-400 mb-8 tracking-widest flex items-center gap-2">
-          <Icons.Map /> Neighborhood Heat
-        </h3>
-        <div className="space-y-4">
-            {Array.from(new Set(posts.map(p => p.location))).slice(0, 5).map(loc => {
-                const locPosts = posts.filter(p => p.location === loc);
-                const solveRate = (locPosts.filter(p => p.isSolved).length / locPosts.length * 100).toFixed(0);
-                return (
-                  <div key={loc} className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                              <Icons.MapPin />
-                          </div>
-                          <div>
-                              <p className="text-sm font-black uppercase text-slate-900">{loc}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">{locPosts.length} Active Posts</p>
-                          </div>
-                      </div>
-                      <div className="text-right">
-                          <p className="text-xl font-black text-indigo-600 leading-none">{solveRate}%</p>
-                          <p className="text-[8px] font-black uppercase text-slate-300">Plug Success</p>
-                      </div>
-                  </div>
-                );
-            })}
+      {/* Neighborhood Success Metrics */}
+      {!isQuietMode && (
+        <div className="bg-indigo-600 dark:bg-indigo-900/40 rounded-[3.5rem] p-12 text-white shadow-2xl shadow-indigo-500/20">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 text-center">
+            <div>
+               <p className="text-4xl font-black italic tracking-tighter mb-1">84%</p>
+               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-200">Plug Success Rate</p>
+            </div>
+            <div>
+               <p className="text-4xl font-black italic tracking-tighter mb-1">12m</p>
+               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-200">Avg Response Time</p>
+            </div>
+            <div>
+               <p className="text-4xl font-black italic tracking-tighter mb-1">452</p>
+               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-200">Active Neighborhoods</p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

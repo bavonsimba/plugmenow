@@ -37,7 +37,7 @@ export default function App() {
   const [filterType, setFilterType] = useState<PostType | 'ALL'>('ALL');
   const [showToast, setShowToast] = useState<{message: string, icon: string} | null>(null);
   
-  // 1️⃣2️⃣ Night Mode & 6️⃣ Quiet Mode
+  // Night Mode & Quiet Mode
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isQuietMode, setIsQuietMode] = useState(false);
 
@@ -50,7 +50,7 @@ export default function App() {
   }, [isDarkMode]);
 
   const notify = useCallback((message: string, icon: string = '✨') => {
-    if (isQuietMode) return; // Respect 6️⃣ Quiet Mode
+    if (isQuietMode) return;
     setShowToast({ message, icon });
     setTimeout(() => setShowToast(null), 3000);
   }, [isQuietMode]);
@@ -102,7 +102,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen pb-32 ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen pb-32 ${isDarkMode ? 'dark' : ''} transition-colors duration-500`}>
       <Navbar 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
@@ -116,9 +116,9 @@ export default function App() {
       <main className="max-w-2xl mx-auto px-4 pt-12">
         {activeTab === 'feed' && (
           <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-            {/* 8️⃣ Community Vibes */}
+            {/* Community Vibes */}
             {!isQuietMode && (
-              <div className="flex items-center gap-4 mb-10 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 p-6 rounded-[2rem] shadow-sm">
+              <div className="flex items-center gap-4 mb-10 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 p-8 rounded-[3rem] shadow-sm">
                 <div className="text-2xl">🌍</div>
                 <div className="flex-1">
                     <p className="text-[10px] font-black uppercase text-indigo-400 dark:text-indigo-300 tracking-[0.2em]">Weekly Pulse</p>
@@ -132,7 +132,7 @@ export default function App() {
                 <button 
                   key={type}
                   onClick={() => setFilterType(type as any)}
-                  className={`px-8 py-3.5 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                  className={`px-8 py-3.5 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                   {type === 'ALL' ? 'Community' : type === PostType.LOOKING ? 'Requests' : 'Available'}
                 </button>
@@ -150,7 +150,7 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'dashboard' && <Dashboard posts={posts} />}
+        {activeTab === 'dashboard' && <Dashboard posts={posts} isQuietMode={isQuietMode} />}
         
         {activeTab === 'profile' && (
           <ProfilePage 
@@ -161,17 +161,17 @@ export default function App() {
         )}
       </main>
 
-      {/* 1️⃣8️⃣ Soft Notifications */}
+      {/* Soft Notifications */}
       {showToast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 duration-300">
-          <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10 backdrop-blur-md">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 duration-500">
+          <div className="bg-slate-900/90 dark:bg-slate-100/90 text-white dark:text-slate-900 px-8 py-4 rounded-[1.5rem] shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-xl">
             <span className="text-lg">{showToast.icon}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest">{showToast.message}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">{showToast.message}</span>
           </div>
         </div>
       )}
 
-      {/* 1️⃣ No Clutter FAB */}
+      {/* No Clutter FAB */}
       <button 
         onClick={() => setIsModalOpen(true)}
         className="fixed bottom-10 right-10 w-20 h-20 vibrant-gradient text-white rounded-[2.2rem] shadow-[0_20px_40px_-10px_rgba(99,102,241,0.5)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 border-4 border-white dark:border-slate-800"
